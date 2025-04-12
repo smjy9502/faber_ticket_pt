@@ -1,0 +1,89 @@
+name: faber_ticket_pt
+description: A new Flutter project.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker_for_web: ^3.0.6
+  youtube_player_iframe: ^2.2.2
+  uuid: ^4.5.1
+  shared_preferences: ^2.2.1
+  url_launcher: ^6.1.5
+  cloud_firestore: ^5.6.5
+  nfc_manager: ^3.5.0
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.4.2
+  firebase_storage: ^12.4.2
+  universal_html: ^2.0.8
+
+#dependency_overrides:
+#  firebase_core_platform_interface: ^5.4.0
+#
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+#dependencies:
+#  flutter:
+#    sdk: flutter
+#  image_picker_for_web: ^3.0.1
+#  youtube_player_iframe: ^2.2.2
+#  cloud_firestore: ^4.9.1
+#  firebase_core: ^2.15.1
+#  firebase_storage: ^11.2.6
+#  shared_preferences: ^2.2.1
+#  uuid: ^3.0.7
+#  nfc_manager: ^3.5.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/ticket_front.webp
+    - assets/images/ticket_back.webp
+    - assets/images/setlist_background.webp
+    - assets/images/photo_background.webp
+    - assets/images/error_background.jpg
+    - assets/images/button_setlist.jpg
+    - assets/images/setlist_player.gif
+    - assets/images/cover_1.webp
+    - assets/images/cover_2.webp
+    - assets/images/cover_3.webp
+    - assets/images/cover_4.webp
+    - assets/images/cover_5.webp
+    - assets/images/cover_6.webp
+    - assets/images/cover_7.webp
+    - assets/images/cover_8.webp
+    - assets/images/cover_9.webp
+    - assets/images/cover_10.webp
+    - assets/images/cover_11.webp
+    - assets/images/cover_12.webp
+    - assets/images/cover_13.webp
+    - assets/images/cover_14.webp
+    - assets/images/cover_15.webp
+    - assets/images/cover_16.webp
+    - assets/images/cover_17.webp
+    - assets/images/cover_18.webp
+    - assets/images/cover_19.webp
+    - assets/images/cover_20.webp
+    - assets/images/cover_21.webp
+    - assets/images/cover_22.webp
+    - assets/images/cover_23.webp
+    - assets/images/cover_24.webp
+    - assets/images/cover_25.webp
+    - assets/images/cover_26.webp
+    - assets/images/cover_27.webp
+    - assets/images/cover_28.webp
+    - assets/images/petal_full.png
+    - assets/images/petal_empty.png
+
+  fonts:
+    - family: CustomFont
+      fonts:
+        - asset: assets/fonts/NotoSansKR-Regular.ttf
