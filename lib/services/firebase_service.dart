@@ -61,35 +61,47 @@ class FirebaseService {
 
 
 
-  Future<void> saveCustomData(Map<String, dynamic> data) async {
-    final uid = await getOrCreateUID();
-    await _firestore.collection('users').doc(uid).set({
-      'customData': data,
-      'lastUpdated': FieldValue.serverTimestamp()
-    }, SetOptions(merge: true));
+  Future<String> uploadImage(html.File file, {required String path}) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid ?? 'default';
+      final storageRef = _storage.ref().child(path);
+      final uploadTask = storageRef.putBlob(file);
+      await uploadTask;
+      return await storageRef.getDownloadURL();
+    } catch (e) {
+      print("이미지 업로드 오류: $e");
+      rethrow;
+    }
   }
 
-  Future<String> uploadImage(html.File file, {required String path}) async {
-    final uid = await getOrCreateUID();
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
-    final destination = '$path/$fileName'; // 외부에서 경로 주입
-    final ref = _storage.ref(destination);
-    final metadata = firebase_storage.SettableMetadata(
-      contentType: 'image/jpeg',
-      customMetadata: {'picked-file-path': fileName},
-    );
-    final uploadTask = ref.putBlob(file, metadata);
-    final snapshot = await uploadTask.whenComplete(() {});
-    return await snapshot.ref.getDownloadURL();
+  Future<void> saveCustomData(Map<String, dynamic> data) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid ?? 'default';
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('photo_data')
+          .doc('gallery')
+          .set(data, SetOptions(merge: true));
+    } catch (e) {
+      print("데이터 저장 오류: $e");
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> getCustomData() async {
-    final uid = await getOrCreateUID();
-    DocumentSnapshot snapshot = await _firestore.collection('users').doc(uid).get();
-    if (!snapshot.exists) {
-      return {};
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid ?? 'default';
+      final doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('photo_data')
+          .doc('gallery')
+          .get();
+      return doc.data() ?? {};
+    } catch (e) {
+      print("데이터 불러오기 오류: $e");
+      rethrow;
     }
-    Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
-    return data['customData'] as Map<String, dynamic>? ?? {};
   }
 }

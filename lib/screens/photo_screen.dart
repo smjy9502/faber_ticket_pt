@@ -1,8 +1,8 @@
-import 'dart:typed_data';
+import 'dart:html' as html;
 import 'package:faber_ticket_pt/screens/main_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'dart:html' as html;
 import 'package:faber_ticket_pt/services/firebase_service.dart';
 import 'package:faber_ticket_pt/utils/constants.dart';
 import 'package:uuid/uuid.dart';
@@ -14,20 +14,41 @@ class PhotoScreen extends StatefulWidget {
 
 class _PhotoScreenState extends State<PhotoScreen> {
   final FirebaseService _firebaseService = FirebaseService();
+  final Uuid _uuid = Uuid();
   List<String> imageUrls = List.filled(9, '');
+  ImageProvider? _backgroundImage;
 
   @override
   void initState() {
     super.initState();
+    _loadBackgroundImage();
     loadImages();
   }
 
+  Future<void> _loadBackgroundImage() async {
+    try {
+      final urlParams = Uri.base.queryParameters;
+      final photoBackground = urlParams['cp'];
+
+      if (photoBackground != null) {
+        final ref = FirebaseStorage.instance.ref("images/$photoBackground");
+        final url = await ref.getDownloadURL();
+        setState(() => _backgroundImage = NetworkImage(url));
+      }
+    } catch (e) {
+      print("배경 이미지 로드 실패: $e");
+      setState(() => _backgroundImage = AssetImage(Constants.photoBackgroundImage));
+    }
+  }
+
   Future<void> loadImages() async {
-    final data = await _firebaseService.getCustomData();
-    if (data['imageUrls'] != null) {
-      setState(() {
-        imageUrls = List.from(data['imageUrls']);
-      });
+    try {
+      final data = await _firebaseService.getCustomData();
+      if (data['imageUrls'] != null) {
+        setState(() => imageUrls = List.from(data['imageUrls']));
+      }
+    } catch (e) {
+      print("이미지 불러오기 실패: $e");
     }
   }
 
@@ -41,27 +62,25 @@ class _PhotoScreenState extends State<PhotoScreen> {
       if (input.files!.isNotEmpty) {
         for (var i = 0; i < input.files!.length && i < imageUrls.length; i++) {
           final file = input.files![i];
-
           final userId = FirebaseAuth.instance.currentUser?.uid ?? 'default';
-          final uuid = Uuid().v4();
+          final path = 'users/$userId/photos/${_uuid.v4()}_${file.name}';
 
-          final downloadUrl = await _firebaseService.uploadImage(
-            file, path: 'users/$userId/photos/${uuid}_${file.name}' //경로 변경
-          );
-
-          setState(() {
-            imageUrls[i] = downloadUrl;
-          });
+          final downloadUrl = await _firebaseService.uploadImage(file, path: path);
+          setState(() => imageUrls[i] = downloadUrl);
         }
         await saveImages();
       }
     } catch (e) {
-      print("Error uploading image: $e");
+      print("이미지 업로드 실패: $e");
     }
   }
 
   Future<void> saveImages() async {
-    await _firebaseService.saveCustomData({'imageUrls': imageUrls});
+    try {
+      await _firebaseService.saveCustomData({'imageUrls': imageUrls});
+    } catch (e) {
+      print("데이터 저장 실패: $e");
+    }
   }
 
   @override
@@ -69,60 +88,60 @@ class _PhotoScreenState extends State<PhotoScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(Constants.photoBackgroundImage),
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
+          if (_backgroundImage != null)
+            Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: _backgroundImage!,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
           Positioned(
             top: 15,
             left: 20,
             child: IconButton(
               icon: Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => MainScreen()),
-                );
-              },
+              onPressed: () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => MainScreen()),
+              ),
             ),
           ),
           SafeArea(
             child: Column(
               children: [
-                // 50 -> 30
-                Expanded(child: SizedBox(height: 30,)),
+                Expanded(child: SizedBox(height: 30)),
                 Expanded(
                   flex: 3,
                   child: GridView.builder(
-                    gridDelegate:
-                    SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 4, mainAxisSpacing: 4),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 4,
+                      mainAxisSpacing: 4,
+                    ),
                     itemCount: imageUrls.length,
                     itemBuilder: (context, index) => GestureDetector(
-                      onTap: () {
-                        if (imageUrls[index].isNotEmpty) {
-                          showDialog(
-                            context: context,
-                            builder: (_) => Dialog(child: Image.network(imageUrls[index])),
-                          );
-                        }
-                      },
+                      onTap: () => imageUrls[index].isNotEmpty
+                          ? showDialog(
+                        context: context,
+                        builder: (_) => Dialog(child: Image.network(imageUrls[index])),
+                      )
+                          : null,
                       child: Container(
-                        decoration:
-                        BoxDecoration(border: Border.all(color: Colors.black, width: 1)),
-                        child:
-                        imageUrls[index].isNotEmpty ? Image.network(imageUrls[index], fit: BoxFit.cover) : Icon(Icons.add_photo_alternate),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black, width: 1),
+                        ),
+                        child: imageUrls[index].isNotEmpty
+                            ? Image.network(imageUrls[index], fit: BoxFit.cover)
+                            : Icon(Icons.add_photo_alternate),
                       ),
                     ),
                   ),
                 ),
                 ElevatedButton(
-                  child: Text('Upload'),
                   onPressed: uploadImages,
+                  child: Text('Upload'),
                 ),
                 SizedBox(height: 20),
               ],
