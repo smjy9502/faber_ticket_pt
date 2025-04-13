@@ -16,7 +16,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
   final FirebaseService _firebaseService = FirebaseService();
   final Uuid _uuid = Uuid();
   List<String> imageUrls = List.filled(9, '');
-  ImageProvider? _backgroundImage;
+  ImageProvider? _photoBackground;
 
   @override
   void initState() {
@@ -33,11 +33,13 @@ class _PhotoScreenState extends State<PhotoScreen> {
       if (photoBackground != null) {
         final ref = FirebaseStorage.instance.ref("images/$photoBackground");
         final url = await ref.getDownloadURL();
-        setState(() => _backgroundImage = NetworkImage(url));
+        setState(() => _photoBackground = NetworkImage(url));
+      } else {
+        throw Exception('Custom Image 파라미터 없음');
       }
     } catch (e) {
       print("배경 이미지 로드 실패: $e");
-      setState(() => _backgroundImage = AssetImage(Constants.photoBackgroundImage));
+      setState(() => _photoBackground = AssetImage(Constants.photoBackgroundImage));
     }
   }
 
@@ -88,11 +90,11 @@ class _PhotoScreenState extends State<PhotoScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          if (_backgroundImage != null)
+          if (_photoBackground != null)
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: _backgroundImage!,
+                  image: _photoBackground!,
                   fit: BoxFit.cover,
                 ),
               ),
