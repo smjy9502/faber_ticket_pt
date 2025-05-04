@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:faber_ticket_pt/services/firebase_service.dart';
 import 'package:faber_ticket_pt/utils/constants.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:html' as html; // For url cleansing
+
 
 class PhotoScreen extends StatefulWidget {
   @override
@@ -21,14 +23,26 @@ class _PhotoScreenState extends State<PhotoScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBackgroundImage();
+    _loadBackgroundImage().then((_){
+      // 매개변수 읽은 후 URL에서 제거
+      html.window.history.replaceState({}, '', '/photo');
+    });
     loadImages();
   }
 
+
   Future<void> _loadBackgroundImage() async {
     try {
-      final urlParams = Uri.base.queryParameters;
+      // final urlParams = Uri.base.queryParameters;
+      // final photoBackground = urlParams['cp'];
+      // sessionStorage에서 매개변수 읽기
+      final storedParams = html.window.sessionStorage['params'];
+      final urlParams = storedParams != null
+          ? Uri(query: storedParams).queryParameters
+          : Uri.base.queryParameters;
+
       final photoBackground = urlParams['cp'];
+      //이 위까지 수정
 
       if (photoBackground != null) {
         final ref = FirebaseStorage.instance.ref("images/$photoBackground");

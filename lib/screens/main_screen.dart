@@ -6,6 +6,8 @@ import 'package:faber_ticket_pt/widgets/custom_button.dart';
 import 'package:faber_ticket_pt/services/firebase_service.dart';
 import 'error_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:html' as html; // For url cleansing
+
 
 class MainScreen extends StatefulWidget {
   @override
@@ -18,13 +20,34 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _loadMainBackground();
+    // 초기 매개변수를 sessionStorage에 저장
+    _storeInitialParams();
+    _loadMainBackground().then((_) {
+      html.window.history.replaceState({}, '', '/');
+    });
   }
+  void _storeInitialParams() {
+    final uri = Uri.parse(html.window.location.href);
+    if (uri.queryParameters.isNotEmpty) {
+      html.window.sessionStorage['params'] =
+          uri.queryParameters.entries.map((e) => '${e.key}=${e.value}').join('&');
+    }
+  }
+
+
+
 
   Future<void> _loadMainBackground() async {
     try {
-      final urlParams = Uri.base.queryParameters;
+      // final urlParams = Uri.base.queryParameters;
+      // final mainBackground = urlParams['cm'];
+      final storedParams = html.window.sessionStorage['params'];
+      final urlParams = storedParams != null
+          ? Uri(query: storedParams).queryParameters
+          : Uri.base.queryParameters;
+
       final mainBackground = urlParams['cm'];
+      //이 위까지 수정
 
       if (mainBackground != null) {
         final ref = FirebaseStorage.instance.ref("images/$mainBackground");
