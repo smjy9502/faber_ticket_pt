@@ -53,13 +53,29 @@ class MyApp extends StatelessWidget {
 
 Future<bool> checkInitialAccess() async {
   if (foundation.kIsWeb) {
+    final uri = Uri.parse(html.window.location.href);
+    final hasUrlParams = uri.queryParameters.isNotEmpty;
+
+    // 1. URL 파라미터 없으면 세션스토리지 삭제
+    if (!hasUrlParams) {
+      html.window.sessionStorage.remove('params');
+    } else {
+      // 2. URL 파라미터 있으면 세션스토리지 저장
+      html.window.sessionStorage['params'] =
+          uri.queryParameters.entries.map((e) => '${e.key}=${e.value}').join('&');
+    }
+
+    // 3. 세션스토리지 체크
+    final storedParams = html.window.sessionStorage['params'];
+    if (!hasUrlParams && (storedParams == null || storedParams.isEmpty)) {
+      return false; // ErrorScreen 표시
+    }
+
+    // 4. 모바일 체크 (기존 로직 유지)
     final userAgent = html.window.navigator.userAgent?.toLowerCase() ?? '';
-    print('User Agent: $userAgent');
     final isMobile = userAgent.contains('mobile') ||
         userAgent.contains('android') ||
-        userAgent.contains('iphone')
-        // || userAgent.contains('macintosh')
-    ;
+        userAgent.contains('iphone');
     return isMobile;
   }
   return true;
