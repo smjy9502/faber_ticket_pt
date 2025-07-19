@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:html' as html;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -80,8 +83,8 @@ class FirebaseService {
       await _firestore
           .collection('users')
           .doc(userId)
-          .collection('photo_data')
-          .doc('gallery')
+          .collection('reviews')
+          .doc('current')
           .set(data, SetOptions(merge: true));
     } catch (e) {
       print("데이터 저장 오류: $e");
@@ -95,8 +98,8 @@ class FirebaseService {
       final doc = await _firestore
           .collection('users')
           .doc(userId)
-          .collection('photo_data')
-          .doc('gallery')
+          .collection('reviews')
+          .doc('current')
           .get();
       return doc.data() ?? {};
     } catch (e) {
@@ -104,4 +107,12 @@ class FirebaseService {
       rethrow;
     }
   }
+
+  Future<String> uploadImageBytes(Uint8List data, {required String path, String? contentType}) async {
+    final ref = FirebaseStorage.instance.ref(path);
+    final uploadTask = ref.putData(data, SettableMetadata(contentType: contentType));
+    final snapshot = await uploadTask;
+    return await snapshot.ref.getDownloadURL();
+  }
 }
+

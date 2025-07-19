@@ -23,6 +23,11 @@ dependencies:
   firebase_storage: ^12.4.2
   universal_html: ^2.0.8
   flutter_keyboard_visibility: ^5.3.0
+  cached_network_image: ^3.3.1
+  flutter_image_compress: ^2.2.0
+  image: ^4.1.7
+  font_awesome_flutter: ^10.7.0
+
 
 
 #dependency_overrides:
@@ -47,43 +52,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/ticket_front.webp
-    - assets/images/ticket_back.webp
-    - assets/images/setlist_background.webp
-    - assets/images/photo_background.webp
-    - assets/images/error_background.jpg
-    - assets/images/button_setlist.jpg
-    - assets/images/setlist_player.gif
-    - assets/images/cover_1.webp
-    - assets/images/cover_2.webp
-    - assets/images/cover_3.webp
-    - assets/images/cover_4.webp
-    - assets/images/cover_5.webp
-    - assets/images/cover_6.webp
-    - assets/images/cover_7.webp
-    - assets/images/cover_8.webp
-    - assets/images/cover_9.webp
-    - assets/images/cover_10.webp
-    - assets/images/cover_11.webp
-    - assets/images/cover_12.webp
-    - assets/images/cover_13.webp
-    - assets/images/cover_14.webp
-    - assets/images/cover_15.webp
-    - assets/images/cover_16.webp
-    - assets/images/cover_17.webp
-    - assets/images/cover_18.webp
-    - assets/images/cover_19.webp
-    - assets/images/cover_20.webp
-    - assets/images/cover_21.webp
-    - assets/images/cover_22.webp
-    - assets/images/cover_23.webp
-    - assets/images/cover_24.webp
-    - assets/images/cover_25.webp
-    - assets/images/cover_26.webp
-    - assets/images/cover_27.webp
-    - assets/images/cover_28.webp
-    - assets/images/petal_full.png
-    - assets/images/petal_empty.png
+    - assets/images/locker.png
+    - assets/images/pier.webp
+    - assets/images/logo.webp
+
 
   fonts:
     - family: CustomFont

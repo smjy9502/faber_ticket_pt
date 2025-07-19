@@ -1,12 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:faber_ticket_pt/screens/photo_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:faber_ticket_pt/utils/constants.dart';
-import 'package:flutter/material.dart';
-import 'package:faber_ticket_pt/widgets/custom_button.dart';
-import 'package:faber_ticket_pt/services/firebase_service.dart';
 import 'error_screen.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:html' as html; // For url cleansing
+
 
 
 class MainScreen extends StatefulWidget {
@@ -16,6 +13,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   ImageProvider? _mainBackground;
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -83,13 +81,12 @@ class _MainScreenState extends State<MainScreen> {
         return;
       }
 
-      // 2. 정상 이미지 로드
-      final ref = FirebaseStorage.instance.ref("images/$mainBackground");
-      final url = await ref.getDownloadURL();
+      // Firestore에서 backgrounds/main 문서의 imageUrl 필드 사용
+      final doc = await FirebaseFirestore.instance.collection('backgrounds').doc(mainBackground).get();
+      final url = doc.data()?['imageUrl'];
+      if (url == null) throw Exception('No background URL');
       setState(() => _mainBackground = NetworkImage(url));
-
     } catch (e) {
-      // 3. 예외 발생 시에도 에러 화면 이동
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacement(
           context,
@@ -102,78 +99,136 @@ class _MainScreenState extends State<MainScreen> {
 
 
 
+  void _onNavTap(int index) {
+    setState(() => _currentIndex = index);
+    if (index == 1) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => PhotoScreen()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double verticalSpacing = MediaQuery.of(context).size.height * 0.03;
+
     return Scaffold(
-      backgroundColor: Colors.transparent, // Scaffold 배경 투명화.
       body: _mainBackground == null
           ? Center(child: CircularProgressIndicator())
-          : Stack(
-        children: [
-          // 배경 이미지 (photo_screen.dart와 동일)
-          Positioned.fill(
-            child: Image(
-              image: _mainBackground!,
-              fit: BoxFit.fill, // 또는 BoxFit.fill, BoxFit.contain 등 테스트 가능
-              // alignment: Alignment.topCenter, // photo_screen.dart와 맞추려면 topCenter
-            ),
+          : Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: _mainBackground!,
+            fit: BoxFit.cover,
           ),
-          // 나머지 UI
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildNavigationButton('📷', PhotoScreen()),
-              ],
+        ),
+        child: Stack(
+          children: [
+            // 아래쪽 gradient
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.white.withOpacity(0.9),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, // ⬅ 왼쪽 정렬
+                children: [
+                  Spacer(),
+                  // 글씨 왼쪽에 딱 붙임
+                  Padding(
+                    padding: EdgeInsets.only(left: screenWidth * 0.09),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "You are my",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.075,
+                            fontWeight: FontWeight.w300,
+                            color: Colors.black.withOpacity(0.7),
+                            height: 1.4,
+                          ),
+                        ),
+                        Text(
+                          "faberite",
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.17,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            height: 1.2,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withOpacity(0.1),
+                                offset: Offset(1, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: verticalSpacing * 2.0),
+
+                  // 버튼
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildMinimalIconButton(Icons.home, 0),
+                        _buildMinimalIconButton(Icons.camera_alt, 1),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: verticalSpacing * 1.5),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavigationButton(String text, Widget screen) {
-    return ElevatedButton(
-      onPressed: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => screen),
-      ),
-      style: ElevatedButton.styleFrom(
-        minimumSize: Size(120, 50),
-        padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(25),
-        ),
-        elevation: 8,
-        shadowColor: Colors.blue.withOpacity(0.3),
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-      ).copyWith(
-        overlayColor: MaterialStateProperty.resolveWith<Color>(
-              (states) => Colors.blue.withOpacity(0.1),
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
-          gradient: LinearGradient(
-            colors: [Colors.blueAccent, Colors.blueGrey],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+
+
+  Widget _buildMinimalIconButton(IconData icon, int index) {
+    final bool isSelected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () => _onNavTap(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected
+                ? Colors.lightBlue
+                : Colors.black.withOpacity(0.3),
+            size: MediaQuery.of(context).size.width * 0.075,
           ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
+          SizedBox(height: 4),
+          if (isSelected)
+            Container(
+              width: 14,
+              height: 2,
+              decoration: BoxDecoration(
+                color: Colors.lightBlue,
+                borderRadius: BorderRadius.circular(1),
+              ),
+            )
+        ],
       ),
     );
   }
